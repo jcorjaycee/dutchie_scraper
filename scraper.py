@@ -58,9 +58,9 @@ for page in range(dutchie_get_num_pages() + 1):
     height = int(driver.execute_script("return document.documentElement.scrollHeight"))
 
     while scrollLevel < height:
-        scrollLevel += 1000
-        driver.execute_script("window.scrollTo(0," + str(scrollLevel) + ")")
-        time.sleep(0.2)
+        scrollLevel += 500
+        driver.execute_script("window.scrollTo(200," + str(scrollLevel) + ")")
+        time.sleep(0.4)
 
     cells = driver.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CELL)
 
@@ -85,7 +85,7 @@ for page in range(dutchie_get_num_pages() + 1):
 
     if page < dutchie_get_num_pages():
         driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NEXT).click()
-        time.sleep(0.2)
+        time.sleep(2)
 
 print(str(len(productList)) + " items added. Here is the list.")
 
