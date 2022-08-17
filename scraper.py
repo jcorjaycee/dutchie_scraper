@@ -35,7 +35,13 @@ class Product:
         self.prices = prices
 
     def toString(self):
-        return self.brand.ljust(30, ' ') + self.name.ljust(30, ' ')
+        string_build = self.brand.ljust(30, ' ') + self.name.ljust(30, ' ')
+        if len(self.sizes) > 0:
+            for i in range(len(self.sizes)):
+                string_build += "\n" + self.sizes[i].rjust(45, ' ') + self.prices[i].rjust(5, ' ')
+        else:
+            string_build += self.prices[0]
+        return string_build
 
 
 def dutchie_get_num_pages():
@@ -58,19 +64,28 @@ for page in range(dutchie_get_num_pages() + 1):
 
     cells = driver.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CELL)
 
-    for index, cell in enumerate(cells):
+    for cell in cells:
         product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
         product_name = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_NAME).text
-        product_sizes = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_SIZE)
-        product_prices = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_PRICE)
+        # have to grab size/price lists separately as otherwise the lists will go stale when referencing later on
+        # cannot grab .text directly due to the plural find_elements method
+        product_sizes_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_SIZE)
+        product_prices_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_PRICE)
+
+        product_sizes = []
+        product_prices = []
+
+        for index, price in enumerate(product_prices_list):
+            if len(product_sizes_list) > 0:
+                product_sizes.append(product_sizes_list[index].text)
+            product_prices.append(price.text)
 
         newProduct = Product(product_brand, product_name, product_sizes, product_prices)
         productList.append(newProduct)
-        print(product_brand + " " + product_name)
 
     if page < dutchie_get_num_pages():
         driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NEXT).click()
-        time.sleep(3)
+        time.sleep(0.2)
 
 print(str(len(productList)) + " items added. Here is the list.")
 
