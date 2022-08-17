@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -28,14 +29,16 @@ productList = []
 
 
 class Product:
-    def __init__(self, brand, name, sizes, prices):
+    def __init__(self, brand, name, sizes, prices, straintype, concentration):
         self.brand = brand
         self.name = name
         self.sizes = sizes
         self.prices = prices
+        self.strainType = straintype
+        self.concentration = concentration
 
     def toString(self):
-        string_build = self.brand.ljust(30, ' ') + self.name.ljust(30, ' ')
+        string_build = self.brand.ljust(30, ' ') + self.name + "(" + self.strainType + ", " + self.concentration + ")"
         if len(self.sizes) > 0:
             for i in range(len(self.sizes)):
                 string_build += "\n" + self.sizes[i].rjust(45, ' ') + self.prices[i].rjust(5, ' ')
@@ -71,7 +74,6 @@ for page in range(dutchie_get_num_pages() + 1):
         # cannot grab .text directly due to the plural find_elements method
         product_sizes_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_SIZE)
         product_prices_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_PRICE)
-
         product_sizes = []
         product_prices = []
 
@@ -80,7 +82,14 @@ for page in range(dutchie_get_num_pages() + 1):
                 product_sizes.append(product_sizes_list[index].text)
             product_prices.append(price.text)
 
-        newProduct = Product(product_brand, product_name, product_sizes, product_prices)
+        try:
+            product_straintype = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_STRAINTYPE).text
+            product_concentration = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CONCENTRATION).text
+        except NoSuchElementException:
+            continue
+
+        newProduct = Product(product_brand, product_name, product_sizes, product_prices, product_straintype,
+                             product_concentration)
         productList.append(newProduct)
 
     if page < dutchie_get_num_pages():
