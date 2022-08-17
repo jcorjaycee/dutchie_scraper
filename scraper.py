@@ -20,7 +20,7 @@ DUTCHIE_KEY_PRODUCT_PRICE = "hJFddt"
 DUTCHIE_KEY_PRODUCT_BUTTON_SINGLE = "zdtBd"
 DUTCHIE_KEY_PRODUCT_BUTTON_DOUBLE = "esCRpt"
 DUTCHIE_KEY_PRODUCT_STRAINTYPE = "gfWvo"
-DUTCHIE_KEY_PRODUCT_CONCENTRATIONS = "hdncuE"
+DUTCHIE_KEY_PRODUCT_CONCENTRATION = "hdncuE"
 DUTCHIE_KEY_PAGE_BUTTON = "cwWhSO"
 DUTCHIE_KEY_PAGE_NEXT = "hjQwsb"
 DUTCHIE_KEY_PAGE_PREV = "deZqfc"
@@ -54,7 +54,9 @@ def dutchie_get_num_pages():
     return int(page_buttons[-1].text) - 1
 
 
-for page in range(dutchie_get_num_pages() + 1):
+NUM_PAGES = dutchie_get_num_pages()
+
+for page in range(NUM_PAGES + 1):
     print("Processing page " + str(page + 1))
     scrollLevel = 0
 
@@ -92,7 +94,7 @@ for page in range(dutchie_get_num_pages() + 1):
                              product_concentration)
         productList.append(newProduct)
 
-    if page < dutchie_get_num_pages():
+    if page < NUM_PAGES:
         driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NEXT).click()
         time.sleep(2)
 
