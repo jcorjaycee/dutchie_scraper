@@ -86,9 +86,13 @@ for page in range(NUM_PAGES + 1):
 
         try:
             product_straintype = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_STRAINTYPE).text
+        except NoSuchElementException:
+            product_straintype = "No strain info"
+
+        try:
             product_concentration = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CONCENTRATION).text
         except NoSuchElementException:
-            continue
+            product_concentration = "No concentration info"
 
         newProduct = Product(product_brand, product_name, product_sizes, product_prices, product_straintype,
                              product_concentration)
