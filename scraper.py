@@ -30,8 +30,6 @@ DUTCHIE_KEY_PAGE_BUTTON = "cwWhSO"
 DUTCHIE_KEY_PAGE_NEXT = "hjQwsb"
 DUTCHIE_KEY_PAGE_PREV = "deZqfc"
 
-productList = []
-
 
 class Product:
     def __init__(self, brand, name, sizes, prices, straintype, concentration):
