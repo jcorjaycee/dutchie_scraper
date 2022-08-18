@@ -5,12 +5,17 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 import time
+import sqlite3
+import numpy as np
 
 options = Options()
 options.headless = True
 options.add_argument("--window-size=1920,1200")
 driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
-driver.get("https://dutchie.com/stores/STORENAMEHERE")
+
+BASE_URL = "https://dutchie.com/stores"
+repository = "REPO-HERE"
+CATEGORIES = ["flower", "pre-rolls", "vaporizers", "concentrates", "edibles", "tinctures", "topicals", "seeds"]
 
 DUTCHIE_KEY_PRODUCT_CELL = "jTzrhU"
 DUTCHIE_KEY_PRODUCT_BRAND = "bUxuOp"
@@ -54,59 +59,96 @@ def dutchie_get_num_pages():
     return int(page_buttons[-1].text) - 1
 
 
-NUM_PAGES = dutchie_get_num_pages()
+startTime = time.time()
 
-for page in range(NUM_PAGES + 1):
-    print("Processing page " + str(page + 1))
-    scrollLevel = 0
+for category in CATEGORIES:
 
-    height = int(driver.execute_script("return document.documentElement.scrollHeight"))
+    print("Beginning scrape of category: " + category)
+    categoryStartTime = time.time()
 
-    while scrollLevel < height:
-        scrollLevel += 1000
-        driver.execute_script("window.scrollTo(500," + str(scrollLevel) + ")")
-        time.sleep(0.2)
+    driver.get(BASE_URL + "/" + repository + "/products/" + category)
 
-    cells = driver.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CELL)
+    NUM_PAGES = dutchie_get_num_pages()
 
-    for cell in cells:
-        product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
-        product_name = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_NAME).text
-        # have to grab size/price lists separately as otherwise the lists will go stale when referencing later on
-        # cannot grab .text directly due to the plural find_elements method
-        product_sizes_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_SIZE)
-        product_prices_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_PRICE)
-        product_sizes = []
-        product_prices = []
+    productList = []
 
-        for index, price in enumerate(product_prices_list):
-            if len(product_sizes_list) > 0:
-                product_sizes.append(product_sizes_list[index].text)
-            product_prices.append(price.text)
+    for page in range(NUM_PAGES + 1):
+        print("Processing page " + str(page + 1))
+        scrollLevel = 0
 
-        try:
-            product_straintype = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_STRAINTYPE).text
-        except NoSuchElementException:
-            product_straintype = "No strain info"
+        height = int(driver.execute_script("return document.documentElement.scrollHeight"))
 
-        try:
-            product_concentration = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CONCENTRATION).text
-        except NoSuchElementException:
-            product_concentration = "No concentration info"
+        while scrollLevel < height:
+            scrollLevel += 1000
+            driver.execute_script("window.scrollTo(500," + str(scrollLevel) + ")")
+            time.sleep(0.2)
 
-        newProduct = Product(product_brand, product_name, product_sizes, product_prices, product_straintype,
-                             product_concentration)
-        productList.append(newProduct)
+        cells = driver.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CELL)
 
-    if page < NUM_PAGES:
-        driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NEXT).click()
-        time.sleep(1)
+        for cell in cells:
+            product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
+            product_name = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_NAME).text
+            # have to grab size/price lists separately as otherwise the lists will go stale when referencing later on
+            # cannot grab .text directly due to the plural find_elements method
+            product_sizes_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_SIZE)
+            product_prices_list = cell.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_PRICE)
+            product_sizes = []
+            product_prices = []
 
-print(str(len(productList)) + " items added. Here is the list.")
+            for index, price in enumerate(product_prices_list):
+                if len(product_sizes_list) > 0:
+                    product_sizes.append(product_sizes_list[index].text)
+                product_prices.append(price.text)
 
-print("Brand".ljust(30, ' ') + "Name".ljust(30, ' '))
+            try:
+                product_straintype = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_STRAINTYPE).text
+            except NoSuchElementException:
+                product_straintype = "No strain info"
 
-for index, product in enumerate(productList):
-    print(productList[index].toString())
+            try:
+                product_concentration = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CONCENTRATION).text
+            except NoSuchElementException:
+                product_concentration = "No concentration info"
+
+            newProduct = Product(product_brand, product_name, product_sizes, product_prices, product_straintype,
+                                 product_concentration)
+            productList.append(newProduct)
+
+        if page < NUM_PAGES:
+            driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NEXT).click()
+            time.sleep(1)
+
+    print(str(len(productList)) + " items found.")
+
+    con = sqlite3.connect("{}.sqlite".format(repository))
+    cur = con.cursor()
+    category_sql_friendly = category.replace("-", "")
+
+    cur.execute("DROP TABLE IF EXISTS {}".format(category_sql_friendly))
+    cur.execute("CREATE TABLE IF NOT EXISTS {} (brand text, name text, size real, price real, price_per_gram real, "
+                "straintype text, concentration text)".format(category_sql_friendly))
+
+    data = []
+
+    for product in productList:
+        for index, price in enumerate(product.prices):
+            strippedPrice = float(price.strip("$"))
+            if len(product.sizes) > 0:
+                strippedSize = float(product.sizes[index].strip("- g"))
+                pricePerGram = np.round(strippedPrice / strippedSize, 2)
+            else:
+                strippedSize, pricePerGram = "", ""
+            data += [
+                (product.brand, product.name, strippedSize, strippedPrice, pricePerGram, product.strainType,
+                 product.concentration)
+            ]
+
+    cur.executemany('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?)'.format(category_sql_friendly), data)
+
+    con.commit()
+    con.close()
+    print("Committed, took " + str(time.time() - float(categoryStartTime)) + " seconds.")
+
+print("Total run took " + str(time.time() - float(startTime)) + " seconds.")
 
 driver.quit()
