@@ -29,6 +29,7 @@ DUTCHIE_KEY_PRODUCT_CONCENTRATION = "hdncuE"
 DUTCHIE_KEY_PAGE_BUTTON = "cwWhSO"
 DUTCHIE_KEY_PAGE_NEXT = "hjQwsb"
 DUTCHIE_KEY_PAGE_PREV = "deZqfc"
+DUTCHIE_KEY_PAGE_NO_ITEMS = "nhlLt"
 
 
 class Product:
@@ -82,6 +83,20 @@ for category in CATEGORIES:
             time.sleep(0.2)
 
         cells = driver.find_elements(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_CELL)
+
+        if len(cells) == 0:
+            try:
+                driver.find_element(By.CLASS_NAME, DUTCHIE_KEY_PAGE_NO_ITEMS)
+                print("No products found under this category, moving to next.")
+                continue
+            except NoSuchElementException:
+                print("No products found, retrying once in case it was a loading error.")
+                driver.execute_script("window.scrollTo(0, 0)")
+                time.sleep(0.2)
+                driver.execute_script("window.scrollTo(500," + str(scrollLevel) + ")")
+                if len(cells) == 0:
+                    print("Still no products found, moving to next category.")
+                    continue
 
         for cell in cells:
             product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
