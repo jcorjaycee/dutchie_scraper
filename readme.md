@@ -2,7 +2,7 @@
 
 This simple Python script allows for scraping of data from Dutchie. 
 
-This data is then be added into queryable SQLite databases.
+This data is then added into queryable SQLite databases.
 
 ## Reporting Issues
 
