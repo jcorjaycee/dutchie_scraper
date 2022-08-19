@@ -138,7 +138,7 @@ for category in CATEGORIES:
     category_sql_friendly = category.replace("-", "")
 
     cur.execute("DROP TABLE IF EXISTS {}".format(category_sql_friendly))
-    cur.execute("CREATE TABLE IF NOT EXISTS {} (brand text, name text, size real, price real, price_per_gram real, "
+    cur.execute("CREATE TABLE {} (brand text, name text, size real, price real, price_per_gram real, "
                 "straintype text, concentration text)".format(category_sql_friendly))
 
     data = []
