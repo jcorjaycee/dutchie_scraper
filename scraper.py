@@ -100,7 +100,10 @@ for category in CATEGORIES:
                     continue
 
         for cell in cells:
-            product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
+            try:
+                product_brand = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_BRAND).text
+            except NoSuchElementException:
+                product_brand = "No brand specified"
             product_name = cell.find_element(By.CLASS_NAME, DUTCHIE_KEY_PRODUCT_NAME).text
             # have to grab size/price lists separately as otherwise the lists will go stale when referencing later on
             # cannot grab .text directly due to the plural find_elements method
