@@ -15,7 +15,7 @@ driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager()
 
 BASE_URL = "https://dutchie.com/stores"
 repository = "REPO-HERE"
-CATEGORIES = ["flower", "pre-rolls", "vaporizers", "concentrates", "edibles", "tinctures", "topicals", "seeds"]
+CATEGORIES = ["flower", "pre-rolls", "vaporizers", "concentrates", "edibles", "tinctures", "topicals", "seeds", "cbd"]
 
 DUTCHIE_KEY_PRODUCT_CELL = "jTzrhU"
 DUTCHIE_KEY_PRODUCT_BRAND = "bUxuOp"
