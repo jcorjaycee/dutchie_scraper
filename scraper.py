@@ -66,6 +66,7 @@ for category in CATEGORIES:
     categoryStartTime = time.time()
 
     driver.get(BASE_URL + "/" + repository + "/products/" + category)
+    time.sleep(2)
 
     NUM_PAGES = dutchie_get_num_pages()
 
